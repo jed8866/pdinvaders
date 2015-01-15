@@ -18,7 +18,6 @@ class PlayerObject:
         if self.pos.left < 0:
             self.pos.left = 0
 
-
 #--------------------------
 # Initial setup
 #--------------------------
@@ -36,6 +35,11 @@ background = pygame.image.load('images\\background.png').convert()
 player = PlayerObject((screen_size[0] / 2, screen_size[1] - 50))
 
 #--------------------------
+# Various constants
+#--------------------------
+player_speed = 5
+
+#--------------------------
 # Paint startscreen
 #--------------------------
 screen.blit(background, (0, 0))
@@ -45,15 +49,27 @@ screen.blit(player.image, player.pos)
 # Main loop
 #--------------------------
 while True:
-    for event in pygame.event.get():
-        if event.type in (pygame.QUIT, pygame.KEYDOWN):
-            sys.exit()
  
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                sys.exit()
+
+    keys_pressed = pygame.key.get_pressed()
+    player_movement = 0
+
+    if keys_pressed[pygame.K_LEFT]:
+        player_movement = -player_speed
+    elif keys_pressed[pygame.K_RIGHT]:
+        player_movement = player_speed
+                
     # Erase player
     screen.blit(background, player.pos, player.pos)
 
     # Move player
-    player.move_horizontal(-10)
+    player.move_horizontal(player_movement)
 
     # Paint player in new position
     screen.blit(player.image, player.pos)

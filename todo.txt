@@ -1,4 +1,1 @@
-* find/producer billedfiler til rumskib, monstre og missiler
-* indlæs billedfil for spillerens rumskib
-* vis spillerens rumskib og styr den vha piletaster
-* ...
+* vis monstre
