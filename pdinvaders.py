@@ -18,6 +18,12 @@ class PlayerObject:
         if self.pos.left < 0:
             self.pos.left = 0
 
+class Monster:
+    def __init__(self, kind, startpos):
+        path = "images\\monster{0}.png".format(kind)
+        self.image = pygame.image.load(path).convert()
+        self.pos = self.image.get_rect().move(startpos)
+
 #--------------------------
 # Initial setup
 #--------------------------
@@ -33,10 +39,15 @@ clock = pygame.time.Clock()
 
 background = pygame.image.load('images\\background.png').convert()
 player = PlayerObject((screen_size[0] / 2, screen_size[1] - 50))
+monsters = []
+monsters.append( Monster(1, (50, 50)) )
+monsters.append( Monster(2, (50, 100)) )
+monsters.append( Monster(3, (50, 150)) )
 
 #--------------------------
 # Various constants
 #--------------------------
+frames_per_second = 60
 player_speed = 5
 
 #--------------------------
@@ -44,6 +55,8 @@ player_speed = 5
 #--------------------------
 screen.blit(background, (0, 0))
 screen.blit(player.image, player.pos)
+for m in monsters:
+    screen.blit(m.image, m.pos)
 
 #--------------------------
 # Main loop
@@ -65,14 +78,18 @@ while True:
     elif keys_pressed[pygame.K_RIGHT]:
         player_movement = player_speed
                 
-    # Erase player
+    # Erase player and monsters
     screen.blit(background, player.pos, player.pos)
+    for o in monsters:
+        screen.blit(background, m.pos, m.pos)
 
-    # Move player
+    # Move player and monsters
     player.move_horizontal(player_movement)
 
-    # Paint player in new position
+    # Paint player and monsters in new position
     screen.blit(player.image, player.pos)
+    for m in monsters:
+        screen.blit(m.image, m.pos)
 
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(frames_per_second)
