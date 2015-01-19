@@ -1,6 +1,5 @@
-* billed til monstre
 * billed til skud
-* vis monstre
+* start-opstilling til monstre
 * få rumskibet til at skyde
 * bevæg monstre
 * ram monster med skud
@@ -9,5 +8,6 @@
 * highscore
 * lyd til skud
 * lyd til monster bliver ramt
+* monstre skal kunne skyde spilleren
 * musik til spil
 * musik til introskærm
