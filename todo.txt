@@ -1,1 +1,13 @@
+* billed til monstre
+* billed til skud
 * vis monstre
+* få rumskibet til at skyde
+* bevæg monstre
+* ram monster med skud
+* points
+* intro-skærm
+* highscore
+* lyd til skud
+* lyd til monster bliver ramt
+* musik til spil
+* musik til introskærm
