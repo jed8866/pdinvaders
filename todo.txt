@@ -1,4 +1,3 @@
-* billed til skud
 * start-opstilling til monstre
 * få rumskibet til at skyde
 * bevæg monstre

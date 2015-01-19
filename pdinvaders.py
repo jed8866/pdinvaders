@@ -24,11 +24,11 @@ class Monster:
         self.image = pygame.image.load(path).convert()
         self.pos = self.image.get_rect().move(startpos)
 
-class Missile:
-    def __init__(self, startpos):
-        path = "images\\missile.png"
-        self.image = pygame.image.load(path).convert()
-        self.pos = self.image.get_rect().move(startpos)
+#--------------------------
+# Various constants
+#--------------------------
+frames_per_second = 60
+player_speed = 5
 
 #--------------------------
 # Initial setup
@@ -45,7 +45,6 @@ clock = pygame.time.Clock()
 
 background = pygame.image.load('images\\background.png').convert()
 player = PlayerObject((screen_size[0] / 2, screen_size[1] - 50))
-missile = Missile((200, 100))
 monsters = []
 monsters.append( Monster(1, (50, 50)) )
 monsters.append( Monster(2, (50, 100)) )
@@ -53,17 +52,10 @@ monsters.append( Monster(3, (50, 150)) )
 monsters.append( Monster(4, (50, 200)) )
 
 #--------------------------
-# Various constants
-#--------------------------
-frames_per_second = 60
-player_speed = 5
-
-#--------------------------
 # Paint startscreen
 #--------------------------
 screen.blit(background, (0, 0))
 screen.blit(player.image, player.pos)
-screen.blit(missile.image, missile.pos)
 for m in monsters:
     screen.blit(m.image, m.pos)
 
@@ -89,7 +81,6 @@ while True:
                 
     # Erase objects
     screen.blit(background, player.pos, player.pos)
-    screen.blit(background, missile.pos, missile.pos)
     for o in monsters:
         screen.blit(background, m.pos, m.pos)
 
@@ -98,7 +89,6 @@ while True:
 
     # Paint objects in new positions
     screen.blit(player.image, player.pos)
-    screen.blit(missile.image, missile.pos)
     for m in monsters:
         screen.blit(m.image, m.pos)
 
