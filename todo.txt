@@ -1,4 +1,3 @@
-* start-opstilling til monstre
 * få rumskibet til at skyde
 * bevæg monstre
 * ram monster med skud
@@ -10,3 +9,4 @@
 * monstre skal kunne skyde spilleren
 * musik til spil
 * musik til introskærm
+* monsterne svinger med armene
