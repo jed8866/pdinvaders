@@ -6,15 +6,28 @@
 
 import sys, pygame
 
+class Movement:
+    NONE = 0
+    RIGHT = 1
+    LEFT = 2
+
 class PlayerObject:
     def __init__(self, startpos):
         self.image = pygame.image.load('images\\player.png').convert()
         self.pos = self.image.get_rect().move(startpos)
+        self.speed = 5
 
-    def move_horizontal(self, distance):
-        self.pos = self.pos.move(distance, 0)
+    # Move player right or left
+    def move(self, movement):
+        if movement == Movement.RIGHT:
+            self.pos = self.pos.move(self.speed, 0)
+        elif movement == Movement.LEFT:
+            self.pos = self.pos.move(-self.speed, 0)
+
+        # Make sure we don't fall of the screen (to the right)
         if self.pos.right > screen_size[0]:
             self.pos.right = screen_size[0]
+        # ... or to the left
         if self.pos.left < 0:
             self.pos.left = 0
 
@@ -26,7 +39,6 @@ class Monster:
 
     def move(self, distance):
         self.pos = self.pos.move(distance, 0)
-        
         
 class AllMonsters:
     def __init__(self):
@@ -48,7 +60,6 @@ class AllMonsters:
 # Various constants
 #--------------------------
 frames_per_second = 60
-player_speed = 5
 monster_speed = 10
 
 #--------------------------
@@ -89,12 +100,12 @@ while True:
                 sys.exit()
 
     keys_pressed = pygame.key.get_pressed()
-    player_movement = 0
+    player_movement = Movement.NONE
 
     if keys_pressed[pygame.K_LEFT]:
-        player_movement = -player_speed
+        player_movement = Movement.LEFT
     elif keys_pressed[pygame.K_RIGHT]:
-        player_movement = player_speed
+        player_movement = Movement.RIGHT
                 
     # Erase objects
     screen.blit(background, player.pos, player.pos)
@@ -102,15 +113,11 @@ while True:
         screen.blit(background, m.pos, m.pos)
 
     # Move objects
-    player.move_horizontal(player_movement)
-
-    
+    player.move(player_movement)
 
 #    for m in all_monsters.monsters:
 #        m.move(monster_speed)
         
-
-
 
     # Paint objects in new positions
     screen.blit(player.image, player.pos)
