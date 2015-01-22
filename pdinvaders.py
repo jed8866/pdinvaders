@@ -42,19 +42,29 @@ class Monster:
         
 class AllMonsters:
     def __init__(self):
-        self.monsters = []
+        self.monsters = [[None for x in range(8)] for x in range(4)]
         self.build_monsters()
         
+    def paint(self, screen):
+        for row in self.monsters:
+            for m in row:
+                screen.blit(m.image, m.pos)
+
+    def erase(self, screen, background):
+        for row in self.monsters:
+            for m in row:
+                screen.blit(background, m.pos, m.pos)
+
     def build_monsters(self):
         monster_start = (screen_size[0] / 2 - 185, 50)
 
-        for col in range(1, 9):
+        for col in range(0, 8):
 
-            for row in range(1, 5):
-                monster_x = monster_start[0] + (col-1) * 50
-                monster_y = monster_start[1] + (row-1) * 50
+            for row in range(0, 4):
+                monster_x = monster_start[0] + col * 50
+                monster_y = monster_start[1] + row * 50
     
-                self.monsters.append( Monster(row, (monster_x, monster_y)) )
+                self.monsters[row][col] = Monster(row+1, (monster_x, monster_y))
 
 #--------------------------
 # Various constants
@@ -84,8 +94,7 @@ all_monsters = AllMonsters()
 #--------------------------
 screen.blit(background, (0, 0))
 screen.blit(player.image, player.pos)
-for m in all_monsters.monsters:
-    screen.blit(m.image, m.pos)
+all_monsters.paint(screen)
 
 #--------------------------
 # Main loop
@@ -109,20 +118,16 @@ while True:
                 
     # Erase objects
     screen.blit(background, player.pos, player.pos)
-    for m in all_monsters.monsters:
-        screen.blit(background, m.pos, m.pos)
+    all_monsters.erase(screen, background)
 
     # Move objects
     player.move(player_movement)
 
-#    for m in all_monsters.monsters:
-#        m.move(monster_speed)
-        
+    # Move monsters
 
     # Paint objects in new positions
     screen.blit(player.image, player.pos)
-    for m in all_monsters.monsters:
-        screen.blit(m.image, m.pos)
+    all_monsters.paint(screen)
 
     pygame.display.update()
     clock.tick(frames_per_second)
