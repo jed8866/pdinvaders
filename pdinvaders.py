@@ -32,10 +32,12 @@ class PlayerObject:
             self.pos.left = 0
 
 class Monster:
-    def __init__(self, kind, startpos):
+    def __init__(self, kind, startpos, x, y):
         path = "images\\monster{0}.png".format(kind)
         self.image = pygame.image.load(path).convert()
         self.pos = self.image.get_rect().move(startpos)
+        self.x = x
+        self.y = y
 
     def move(self, distance):
         self.pos = self.pos.move(distance, 0)
@@ -44,6 +46,10 @@ class AllMonsters:
     def __init__(self):
         self.monsters = [[None for x in range(8)] for x in range(4)]
         self.build_monsters()
+        self.movement = Movement.RIGHT
+        self.speed = 2
+        self.find_rightmost_monster()
+        self.find_leftmost_monster()
         
     def paint(self, screen):
         for row in self.monsters:
@@ -55,6 +61,41 @@ class AllMonsters:
             for m in row:
                 screen.blit(background, m.pos, m.pos)
 
+    def move(self):
+        if self.movement == Movement.RIGHT:
+            # Move all monsters to the right.
+            # If the movement would cause the right-most monster to hit
+            # the screen boundary, then start moving in the other direction
+            # instead.
+
+            effective_speed = self.speed
+
+            if self.rightmost_monster.pos.right + self.speed > screen_size[0]:
+                print('hitting boundary')
+                effective_speed = screen_size[0] - self.rightmost_monster.pos.right
+                self.movement = Movement.LEFT
+
+            for row in self.monsters:
+                for m in row:
+                    m.move(effective_speed)
+
+        elif self.movement == Movement.LEFT:
+            # Move all monsters to the left.
+            # If the movement would cause the left-most monster to hit
+            # the screen boundary, then start moving in the other direction
+            # instead.
+
+            effective_speed = self.speed
+
+            if self.leftmost_monster.pos.left - self.speed < 0:
+                print('hitting boundary')
+                effective_speed = self.leftmost_monster.pos.left
+                self.movement = Movement.RIGHT
+
+            for row in self.monsters:
+                for m in row:
+                    m.move(-effective_speed)
+
     def build_monsters(self):
         monster_start = (screen_size[0] / 2 - 185, 50)
 
@@ -64,13 +105,46 @@ class AllMonsters:
                 monster_x = monster_start[0] + col * 50
                 monster_y = monster_start[1] + row * 50
     
-                self.monsters[row][col] = Monster(row+1, (monster_x, monster_y))
+                self.monsters[row][col] = Monster(row+1, (monster_x, monster_y), col, row)
+
+    def find_rightmost_monster(self):
+        self.rightmost_monster = self.get_rightmost_monster()
+        print('rightmost')
+        print(self.rightmost_monster.x)
+        print(self.rightmost_monster.y)
+
+    def find_leftmost_monster(self):
+        self.leftmost_monster = self.get_leftmost_monster()
+        print('leftmost')
+        print(self.leftmost_monster.x)
+        print(self.leftmost_monster.y)
+
+    def get_leftmost_monster(self):
+        row_with_leftmost = 0
+        col_with_leftmost = 7
+
+        for row_index, row in enumerate(self.monsters):
+            for col_index, m in enumerate(row):
+                if not (m is None) and col_index < col_with_leftmost:
+                    row_with_leftmost = row_index
+                    col_with_leftmost = col_index
+        return self.monsters[row_with_leftmost][col_with_leftmost]
+
+    def get_rightmost_monster(self):
+        row_with_rightmost = 0
+        col_with_rightmost = 0
+
+        for row_index, row in enumerate(self.monsters):
+            for col_index, m in enumerate(reversed(row)):
+                if not (m is None) and col_index > col_with_rightmost:
+                    row_with_rightmost = row_index
+                    col_with_rightmost = col_index
+        return self.monsters[row_with_rightmost][col_with_rightmost]
 
 #--------------------------
 # Various constants
 #--------------------------
 frames_per_second = 60
-monster_speed = 10
 
 #--------------------------
 # Initial setup
@@ -124,6 +198,7 @@ while True:
     player.move(player_movement)
 
     # Move monsters
+    all_monsters.move()
 
     # Paint objects in new positions
     screen.blit(player.image, player.pos)
