@@ -192,6 +192,18 @@ class AllMonsters:
                     col_with_rightmost = col_index
         return self.monsters[row_with_rightmost][col_with_rightmost]
 
+class Missile:
+    def __init__(self, startpos):
+        self.image = pygame.image.load('images\\missile.png').convert()
+        self.pos = self.image.get_rect().move(startpos)
+        self.speed = 20
+
+    # Move missile towards top of the screen. Returns True if the missile
+    # has left the screen.
+    def move(self):
+        self.pos = self.pos.move(0, -self.speed)
+        return self.pos.bottom < 0
+        
 #--------------------------
 # Various constants
 #--------------------------
@@ -213,6 +225,7 @@ clock = pygame.time.Clock()
 background = pygame.image.load('images\\background.png').convert()
 player = PlayerObject((screen_size[0] / 2, screen_size[1] - 50))
 all_monsters = AllMonsters(4, 8)
+missile = None
 
 #--------------------------
 # Paint startscreen
@@ -241,17 +254,27 @@ while True:
     elif keys_pressed[pygame.K_RIGHT]:
         player_movement = Movement.RIGHT
                 
+    if keys_pressed[pygame.K_SPACE] and missile is None:
+        missile = Missile(player.pos.center)
+
     # Erase objects
     screen.blit(background, player.pos, player.pos)
     all_monsters.erase(screen, background)
+    if not missile is None:
+        screen.blit(background, missile.pos, missile.pos)
 
     # Move objects
     player.move(player_movement)
     all_monsters.move()
+    if not missile is None:
+        if missile.move():
+            missile = None
 
     # Paint objects in new positions
     screen.blit(player.image, player.pos)
     all_monsters.paint(screen)
+    if not missile is None:
+        screen.blit(missile.image, missile.pos)
 
     pygame.display.update()
     clock.tick(frames_per_second)
