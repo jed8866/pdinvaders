@@ -43,9 +43,8 @@ class Monster:
         self.pos = self.pos.move(distance, 0)
         
 class AllMonsters:
-    def __init__(self):
-        self.monsters = [[None for x in range(8)] for x in range(4)]
-        self.build_monsters()
+    def __init__(self, rows, columns):
+        self.build_monsters(rows, columns)
         self.movement = Movement.RIGHT
         self.speed = 2
         self.find_rightmost_monster()
@@ -71,7 +70,6 @@ class AllMonsters:
             effective_speed = self.speed
 
             if self.rightmost_monster.pos.right + self.speed > screen_size[0]:
-                print('hitting boundary')
                 effective_speed = screen_size[0] - self.rightmost_monster.pos.right
                 self.movement = Movement.LEFT
 
@@ -88,7 +86,6 @@ class AllMonsters:
             effective_speed = self.speed
 
             if self.leftmost_monster.pos.left - self.speed < 0:
-                print('hitting boundary')
                 effective_speed = self.leftmost_monster.pos.left
                 self.movement = Movement.RIGHT
 
@@ -96,12 +93,15 @@ class AllMonsters:
                 for m in row:
                     m.move(-effective_speed)
 
-    def build_monsters(self):
+    def build_monsters(self, rows, columns):
+        self.monsters = [[None for x in range(columns)] for x in range(rows)]
+
         monster_start = (screen_size[0] / 2 - 185, 50)
 
-        for col in range(0, 8):
+        for row in range(rows):
 
-            for row in range(0, 4):
+            for col in range(columns):
+
                 monster_x = monster_start[0] + col * 50
                 monster_y = monster_start[1] + row * 50
     
@@ -109,19 +109,13 @@ class AllMonsters:
 
     def find_rightmost_monster(self):
         self.rightmost_monster = self.get_rightmost_monster()
-        print('rightmost')
-        print(self.rightmost_monster.x)
-        print(self.rightmost_monster.y)
 
     def find_leftmost_monster(self):
         self.leftmost_monster = self.get_leftmost_monster()
-        print('leftmost')
-        print(self.leftmost_monster.x)
-        print(self.leftmost_monster.y)
 
     def get_leftmost_monster(self):
         row_with_leftmost = 0
-        col_with_leftmost = 7
+        col_with_leftmost = len(self.monsters[0])-1
 
         for row_index, row in enumerate(self.monsters):
             for col_index, m in enumerate(row):
@@ -161,7 +155,7 @@ clock = pygame.time.Clock()
 
 background = pygame.image.load('images\\background.png').convert()
 player = PlayerObject((screen_size[0] / 2, screen_size[1] - 50))
-all_monsters = AllMonsters()
+all_monsters = AllMonsters(4, 8)
 
 #--------------------------
 # Paint startscreen
