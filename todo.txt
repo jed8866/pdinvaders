@@ -1,7 +1,4 @@
 Daniel
-
-* få rumskibet til at skyde
-* bevæg monstre
 * ram monster med skud
 * points
 * intro-skærm
