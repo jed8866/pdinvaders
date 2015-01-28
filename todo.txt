@@ -13,3 +13,4 @@ Peter
 
 * lyd til skud
 * lyd til monster bliver ramt
+* afspil lyd, når spilleren skyder
