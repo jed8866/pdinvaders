@@ -5,6 +5,8 @@
 #-----------------------------------------------------------
 
 import sys, pygame
+import pygame.mixer
+import os
 
 # Class for holding some named constants - kind of an enum.
 class Movement:
@@ -222,6 +224,10 @@ screen = pygame.display.set_mode(screen_size)
 
 clock = pygame.time.Clock()
 
+# Sound played when shooting
+missile_sound = os.path.join('sounds', '15.wav')
+pygame.mixer.music.load(missile_sound)
+
 background = pygame.image.load('images\\background.png').convert()
 player = PlayerObject((screen_size[0] / 2, screen_size[1] - 50))
 all_monsters = AllMonsters(4, 8)
@@ -256,6 +262,8 @@ while True:
                 
     if keys_pressed[pygame.K_SPACE] and missile is None:
         missile = Missile(player.pos.center)
+        # Play a sound when shooting
+        pygame.mixer.music.play()
 
     # Erase objects
     screen.blit(background, player.pos, player.pos)
