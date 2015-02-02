@@ -8,6 +8,25 @@ import sys, pygame
 import pygame.mixer
 import os
 
+# Load an image. Returns the image and its 'rect'
+def load_image(name):
+    fullname = os.path.join('images', name)
+    try:
+        image = pygame.image.load(fullname)
+    except pygame.error:
+        raise SystemExit('Error while loading image: ' + fullname)
+    image = image.convert()
+    return image, image.get_rect()
+
+# Load a sound.
+def load_sound(name):
+    fullname = os.path.join('sounds', name)
+    try:
+        sound = pygame.mixer.Sound(fullname)
+    except pygame.error:
+        raise SystemExit('Error while loading sound: ' + fullname)
+    return sound
+
 # Class for holding some named constants - kind of an enum.
 class Movement:
     NONE = 0
@@ -19,7 +38,7 @@ class PlayerObject:
 
     # Initialize image, position and speed
     def __init__(self, startpos):
-        self.image = pygame.image.load('images\\player.png').convert()
+        self.image, self.rect = load_image('player.png')
         self.pos = self.image.get_rect().move(startpos)
         self.speed = 5
 
@@ -44,8 +63,8 @@ class Monster:
     #   startpos: screen-coordinates for initial position of the monster
     #   x, y: logical coordinates in grid of monsters - fx (2,3)
     def __init__(self, kind, startpos, x, y):
-        path = "images\\monster{0}.png".format(kind)
-        self.image = pygame.image.load(path).convert()
+        filename = 'monster{0}.png'.format(kind)
+        self.image, self.rect = load_image(filename)
         self.pos = self.image.get_rect().move(startpos)
         self.x = x
         self.y = y
@@ -196,7 +215,7 @@ class AllMonsters:
 
 class Missile:
     def __init__(self, startpos):
-        self.image = pygame.image.load('images\\missile.png').convert()
+        self.image, self.rect = load_image('missile.png')
         self.pos = self.image.get_rect().move(startpos)
         self.speed = 20
 
@@ -225,8 +244,7 @@ screen = pygame.display.set_mode(screen_size)
 clock = pygame.time.Clock()
 
 # Sound played when shooting
-missile_sound = os.path.join('sounds', '15.wav')
-pygame.mixer.music.load(missile_sound)
+missile_sound = load_sound('15.wav')
 
 background = pygame.image.load('images\\background.png').convert()
 player = PlayerObject((screen_size[0] / 2, screen_size[1] - 50))
@@ -263,7 +281,7 @@ while True:
     if keys_pressed[pygame.K_SPACE] and missile is None:
         missile = Missile(player.pos.center)
         # Play a sound when shooting
-        pygame.mixer.music.play()
+        missile_sound.play()
 
     # Erase objects
     screen.blit(background, player.pos, player.pos)
