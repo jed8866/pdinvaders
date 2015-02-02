@@ -33,49 +33,61 @@ class Movement:
     RIGHT = 1
     LEFT = 2
 
+def get_movement(keys_pressed):
+    movement = Movement.NONE
+
+    if keys_pressed[pygame.K_LEFT]:
+        movement = Movement.LEFT
+    elif keys_pressed[pygame.K_RIGHT]:
+        movement = Movement.RIGHT
+
+    return movement
+
 # Class for representing the player.
-class PlayerObject:
+class Player(pygame.sprite.Sprite):
 
     # Initialize image, position and speed
-    def __init__(self, startpos):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
         self.image, self.rect = load_image('player.png')
-        self.pos = self.image.get_rect().move(startpos)
+        self.rect = self.rect.move((screen_size[0] / 2, screen_size[1] - 50))
         self.speed = 5
 
     # Move player right or left
     def move(self, movement):
         if movement == Movement.RIGHT:
-            self.pos = self.pos.move(self.speed, 0)
+            self.rect = self.rect.move(self.speed, 0)
         elif movement == Movement.LEFT:
-            self.pos = self.pos.move(-self.speed, 0)
+            self.rect = self.rect.move(-self.speed, 0)
 
         # Make sure we don't fall of the screen (to the right)
-        if self.pos.right > screen_size[0]:
-            self.pos.right = screen_size[0]
+        if self.rect.right > screen_size[0]:
+            self.rect.right = screen_size[0]
         # ... or to the left
-        if self.pos.left < 0:
-            self.pos.left = 0
+        if self.rect.left < 0:
+            self.rect.left = 0
 
 # Class for representing a single monster.
-class Monster:
+class Monster(pygame.sprite.Sprite):
 
     # Initialize image and position.
     #   startpos: screen-coordinates for initial position of the monster
     #   x, y: logical coordinates in grid of monsters - fx (2,3)
     def __init__(self, kind, startpos, x, y):
+        pygame.sprite.Sprite.__init__(self)
         filename = 'monster{0}.png'.format(kind)
         self.image, self.rect = load_image(filename)
-        self.pos = self.image.get_rect().move(startpos)
+        self.rect = self.rect.move(startpos)
         self.x = x
         self.y = y
 
     # Move the monster horizontally. Caller is responsible for checking that
     # the monster will not fall off the screen - right or left.
     def move(self, distance):
-        self.pos = self.pos.move(distance, 0)
+        self.rect = self.rect.move(distance, 0)
 
     def move_down(self, distance):
-        self.pos = self.pos.move(0, distance)
+        self.rect = self.rect.move(0, distance)
         
 # Class for representing the collection of monsters.
 # A two-dimensional array is used to hold the monsters.
@@ -100,13 +112,13 @@ class AllMonsters:
     def paint(self, screen):
         for row in self.monsters:
             for m in row:
-                screen.blit(m.image, m.pos)
+                screen.blit(m.image, m.rect)
 
     # Erase the monsters from the screen
     def erase(self, screen, background):
         for row in self.monsters:
             for m in row:
-                screen.blit(background, m.pos, m.pos)
+                screen.blit(background, m.rect, m.rect)
 
     # Move all monsters horizontally, and if the screen boundary is
     # hit, move them a bit down as well.
@@ -123,11 +135,11 @@ class AllMonsters:
 
             effective_speed = self.speed[0]
 
-            if self.rightmost_monster.pos.right + self.speed[0] > screen_size[0]:
+            if self.rightmost_monster.rect.right + self.speed[0] > screen_size[0]:
                 # Moving 'self.speed' would cause the rightmost monster to hit
                 # the screen boundary. So instead move as far to the right as we can,
                 # and switch direction. Also move the monsters a bit down.
-                effective_speed = screen_size[0] - self.rightmost_monster.pos.right
+                effective_speed = screen_size[0] - self.rightmost_monster.rect.right
                 self.horizontal_direction = Movement.LEFT
                 move_down = True
 
@@ -139,8 +151,8 @@ class AllMonsters:
 
             effective_speed = -self.speed[0]
 
-            if self.leftmost_monster.pos.left - self.speed[0] < 0:
-                effective_speed = -self.leftmost_monster.pos.left
+            if self.leftmost_monster.rect.left - self.speed[0] < 0:
+                effective_speed = -self.leftmost_monster.rect.left
                 self.horizontal_direction = Movement.RIGHT
                 move_down = True
 
@@ -213,17 +225,25 @@ class AllMonsters:
                     col_with_rightmost = col_index
         return self.monsters[row_with_rightmost][col_with_rightmost]
 
-class Missile:
-    def __init__(self, startpos):
+class Missile(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
         self.image, self.rect = load_image('missile.png')
-        self.pos = self.image.get_rect().move(startpos)
         self.speed = 20
+        # Sound played when shooting
+        self.missile_sound = load_sound('15.wav')
 
-    # Move missile towards top of the screen. Returns True if the missile
-    # has left the screen.
-    def move(self):
-        self.pos = self.pos.move(0, -self.speed)
-        return self.pos.bottom < 0
+    def fire(self, player):
+        self.rect.center = player.rect.center
+        self.missile_sound.play()
+
+    # Move missile towards top of the screen.
+    # If the missile leaves the screen it is 'killed' - ie.
+    # it will not be part of the sprite-group 'allsprites'
+    def update(self):
+        self.rect = self.rect.move(0, -self.speed)
+        if self.rect.bottom < 0:
+            self.kill()
         
 #--------------------------
 # Various constants
@@ -243,19 +263,17 @@ screen = pygame.display.set_mode(screen_size)
 
 clock = pygame.time.Clock()
 
-# Sound played when shooting
-missile_sound = load_sound('15.wav')
-
-background = pygame.image.load('images\\background.png').convert()
-player = PlayerObject((screen_size[0] / 2, screen_size[1] - 50))
+background = load_image('background.png')[0]
+player = Player()
 all_monsters = AllMonsters(4, 8)
-missile = None
+missile = Missile()
+
+allsprites = pygame.sprite.RenderClear(player)
 
 #--------------------------
 # Paint startscreen
 #--------------------------
 screen.blit(background, (0, 0))
-screen.blit(player.image, player.pos)
 all_monsters.paint(screen)
 
 #--------------------------
@@ -270,37 +288,26 @@ while True:
             if event.key == pygame.K_q:
                 sys.exit()
 
-    keys_pressed = pygame.key.get_pressed()
-    player_movement = Movement.NONE
-
-    if keys_pressed[pygame.K_LEFT]:
-        player_movement = Movement.LEFT
-    elif keys_pressed[pygame.K_RIGHT]:
-        player_movement = Movement.RIGHT
-                
-    if keys_pressed[pygame.K_SPACE] and missile is None:
-        missile = Missile(player.pos.center)
-        # Play a sound when shooting
-        missile_sound.play()
-
-    # Erase objects
-    screen.blit(background, player.pos, player.pos)
+    # Erase all sprites from previous position
+    allsprites.clear(screen, background)
     all_monsters.erase(screen, background)
-    if not missile is None:
-        screen.blit(background, missile.pos, missile.pos)
 
-    # Move objects
+    # React to player input
+    keys_pressed = pygame.key.get_pressed()
+
+    player_movement = get_movement(keys_pressed)
     player.move(player_movement)
+
+    if keys_pressed[pygame.K_SPACE] and not missile.alive():
+        allsprites.add(missile)
+        missile.fire(player)
+
     all_monsters.move()
-    if not missile is None:
-        if missile.move():
-            missile = None
-
-    # Paint objects in new positions
-    screen.blit(player.image, player.pos)
+    allsprites.update()
+    
+    # Draw all sprites in new positions
+    allsprites.draw(screen)
     all_monsters.paint(screen)
-    if not missile is None:
-        screen.blit(missile.image, missile.pos)
-
     pygame.display.update()
+
     clock.tick(frames_per_second)
