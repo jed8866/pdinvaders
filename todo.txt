@@ -1,15 +1,13 @@
 Daniel
-* ram monster med skud
+* spiller-liv + håndter game-over
 * points
 * intro-skærm
 * highscore
 * monstre skal kunne skyde spilleren
-* musik til spil
-* musik til introskærm
-* monsterne svinger med armene
 
 
 Peter
-
 * lyd til monster bliver ramt
-
+* musik til spil
+* musik til introskærm
+* monsterne svinger med armene

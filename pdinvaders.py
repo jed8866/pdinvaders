@@ -115,8 +115,7 @@ class MonsterMovementController:
         # We maintain a reference to the right-most and left-most
         # monster. This is used when deciding when the monsters should
         # change direction (horizontally).
-        self.set_rightmost_monster()
-        self.set_leftmost_monster()
+        self.update()
 
     def calculate_movement(self):
         # If the right-most monster has crossed the right screen boundary, or
@@ -130,6 +129,10 @@ class MonsterMovementController:
             self.speed = (-self.speed[0], 2)
         else:
             self.speed = (self.speed[0], 0)
+
+    def update(self):
+        self.set_rightmost_monster()
+        self.set_leftmost_monster()
 
     def set_rightmost_monster(self):
         self.rightmost_monster = self.get_rightmost_monster()
@@ -240,6 +243,15 @@ while True:
 
     allsprites.update()
     
+    # Check for collisions between player-missile and monsters
+    if missile.alive():
+        for monster in pygame.sprite.spritecollide(missile, monsters, 1):
+            # A monster was hit - kill that and the missile (the missile can
+            # only kill one monster)
+            monster.kill()
+            missile.kill()
+            monster_controller.update()
+
     # Draw all sprites in new positions
     allsprites.draw(screen)
     pygame.display.update()
