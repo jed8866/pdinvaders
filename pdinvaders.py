@@ -27,6 +27,26 @@ def load_sound(name):
         raise SystemExit('Error while loading sound: ' + fullname)
     return sound
 
+# Build a sprite-group holding the monsters.
+def build_monsters(rows, columns, allsprites):
+    monsters = pygame.sprite.Group()
+    horizontal_spacing = 50
+    vertical_spacing = 50
+
+    start_x = (screen_size[0] / 2) - 185
+    start_y = 50
+    monster_start = (start_x, start_y)
+
+    for row in range(rows):
+        for col in range(columns):
+            monster_x = monster_start[0] + col * horizontal_spacing
+            monster_y = monster_start[1] + row * vertical_spacing
+    
+            monster = Monster(row+1, (monster_x, monster_y), col, row)
+            monsters.add(monster)
+            allsprites.add(monster)
+    return monsters
+
 # Class for holding some named constants - kind of an enum.
 class Movement:
     NONE = 0
@@ -81,112 +101,35 @@ class Monster(pygame.sprite.Sprite):
         self.x = x
         self.y = y
 
-    # Move the monster horizontally. Caller is responsible for checking that
-    # the monster will not fall off the screen - right or left.
-    def move(self, distance):
-        self.rect = self.rect.move(distance, 0)
+    def update(self):
+        # monster_controller calculates how we should move
+        movement = monster_controller.speed
+        self.rect = self.rect.move(movement)
 
-    def move_down(self, distance):
-        self.rect = self.rect.move(0, distance)
-        
-# Class for representing the collection of monsters.
-# A two-dimensional array is used to hold the monsters.
-# When a monster is shot, the cell is set to 'None'.
-class AllMonsters:
-
-    # Initialize collection.
-    #  rows: number of monster-rows
-    #  columns: number of monster-columns
-    def __init__(self, rows, columns):
-        self.build_monsters(rows, columns)
-        self.horizontal_direction = Movement.RIGHT
-        self.speed = (2, 10)
+# Class for calculating how the monsters should move.
+class MonsterMovementController:
+    def __init__(self, monsters):
+        self.speed = (2, 0)
+        self.monsters = monsters
 
         # We maintain a reference to the right-most and left-most
         # monster. This is used when deciding when the monsters should
         # change direction (horizontally).
         self.set_rightmost_monster()
         self.set_leftmost_monster()
-        
-    # Paint the monsters to the screen
-    def paint(self, screen):
-        for row in self.monsters:
-            for m in row:
-                screen.blit(m.image, m.rect)
 
-    # Erase the monsters from the screen
-    def erase(self, screen, background):
-        for row in self.monsters:
-            for m in row:
-                screen.blit(background, m.rect, m.rect)
+    def calculate_movement(self):
+        # If the right-most monster has crossed the right screen boundary, or
+        # the left-most monster has crossed the left screen boundary, then
+        # start moving in the opposite direction, and move a bit down as well.
 
-    # Move all monsters horizontally, and if the screen boundary is
-    # hit, move them a bit down as well.
-    def move(self):
+        switch_direction = (self.rightmost_monster.rect.right > screen_size[0]
+                            or self.leftmost_monster.rect.left < 0)
 
-        move_down = False
-        effective_speed = 0
-
-        if self.horizontal_direction == Movement.RIGHT:
-            # Move all monsters to the right.
-            # If the movement would cause the right-most monster to hit
-            # the screen boundary, then start moving in the other direction
-            # instead.
-
-            effective_speed = self.speed[0]
-
-            if self.rightmost_monster.rect.right + self.speed[0] > screen_size[0]:
-                # Moving 'self.speed' would cause the rightmost monster to hit
-                # the screen boundary. So instead move as far to the right as we can,
-                # and switch direction. Also move the monsters a bit down.
-                effective_speed = screen_size[0] - self.rightmost_monster.rect.right
-                self.horizontal_direction = Movement.LEFT
-                move_down = True
-
-        elif self.horizontal_direction == Movement.LEFT:
-            # Move all monsters to the left.
-            # If the movement would cause the left-most monster to hit
-            # the screen boundary, then start moving in the other direction
-            # instead.
-
-            effective_speed = -self.speed[0]
-
-            if self.leftmost_monster.rect.left - self.speed[0] < 0:
-                effective_speed = -self.leftmost_monster.rect.left
-                self.horizontal_direction = Movement.RIGHT
-                move_down = True
-
-        if effective_speed != 0:
-            for row in self.monsters:
-                for m in row:
-                    m.move(effective_speed)
-
-        if move_down:
-            for row in self.monsters:
-                for m in row:
-                    m.move_down(self.speed[1])
-
-    # Helper method for building the two-dimensional array of monsters.
-    # 'self.monsters' is a list of rows. Each row contains a number of monsters.
-    # When indexing the grid, use self.monsters[row][column].
-    def build_monsters(self, rows, columns):
-        self.monsters = [[None for x in range(columns)] for x in range(rows)]
-
-        horizontal_spacing = 50
-        vertical_spacing = 50
-
-        start_x = (screen_size[0] / 2) - 185
-        start_y = 50
-        monster_start = (start_x, start_y)
-
-        for row in range(rows):
-
-            for col in range(columns):
-
-                monster_x = monster_start[0] + col * horizontal_spacing
-                monster_y = monster_start[1] + row * vertical_spacing
-    
-                self.monsters[row][col] = Monster(row+1, (monster_x, monster_y), col, row)
+        if switch_direction:
+            self.speed = (-self.speed[0], 2)
+        else:
+            self.speed = (self.speed[0], 0)
 
     def set_rightmost_monster(self):
         self.rightmost_monster = self.get_rightmost_monster()
@@ -194,37 +137,31 @@ class AllMonsters:
     def set_leftmost_monster(self):
         self.leftmost_monster = self.get_leftmost_monster()
 
-    # Find leftmost monster that is not None.
-    # Enumerate grid of monsters - one row at a time.
+    # Find a leftmost monster - ie. one with the lowest value of 'self.x'
     def get_leftmost_monster(self):
-        row_with_leftmost = 0
-        col_with_leftmost = len(self.monsters[0])-1
+        if not self.monsters.sprites():
+            return None
 
-        for row_index, row in enumerate(self.monsters):
-            for col_index, m in enumerate(row):
-                if not (m is None) and col_index < col_with_leftmost:
-                    # We found one with a lower column-index. This is
-                    # the left-most this far.
-                    row_with_leftmost = row_index
-                    col_with_leftmost = col_index
-        return self.monsters[row_with_leftmost][col_with_leftmost]
+        leftmost = self.monsters.sprites()[0]
 
-    # Find rightmost monster that is not None.
-    # Enumerate grid of monsters - one row at a time. Look through
-    # each row from right to left - ie. reversed.
+        for m in self.monsters.sprites():
+            if m.x < leftmost.x:
+                leftmost = m
+        return leftmost
+
+    # Find a rightmost monster.
     def get_rightmost_monster(self):
-        row_with_rightmost = 0
-        col_with_rightmost = 0
+        if not self.monsters.sprites():
+            return None
 
-        for row_index, row in enumerate(self.monsters):
-            for col_index, m in enumerate(reversed(row)):
-                if not (m is None) and col_index > col_with_rightmost:
-                    # We found one with a higher column-index. This is
-                    # the right-most this far.
-                    row_with_rightmost = row_index
-                    col_with_rightmost = col_index
-        return self.monsters[row_with_rightmost][col_with_rightmost]
+        rightmost = self.monsters.sprites()[0]
 
+        for m in self.monsters.sprites():
+            if m.x > rightmost.x:
+                rightmost = m
+        return rightmost
+
+# Class for representing player-missile
 class Missile(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -264,23 +201,22 @@ screen = pygame.display.set_mode(screen_size)
 clock = pygame.time.Clock()
 
 background = load_image('background.png')[0]
+allsprites = pygame.sprite.RenderClear()
 player = Player()
-all_monsters = AllMonsters(4, 8)
-missile = Missile()
-
-allsprites = pygame.sprite.RenderClear(player)
+allsprites.add(player)
+monsters = build_monsters(4, 8, allsprites)
+missile = Missile() # Will be added to 'allsprites' when fired.
+monster_controller = MonsterMovementController(monsters)
 
 #--------------------------
 # Paint startscreen
 #--------------------------
 screen.blit(background, (0, 0))
-all_monsters.paint(screen)
 
 #--------------------------
 # Main loop
 #--------------------------
 while True:
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
@@ -290,11 +226,9 @@ while True:
 
     # Erase all sprites from previous position
     allsprites.clear(screen, background)
-    all_monsters.erase(screen, background)
 
     # React to player input
     keys_pressed = pygame.key.get_pressed()
-
     player_movement = get_movement(keys_pressed)
     player.move(player_movement)
 
@@ -302,12 +236,12 @@ while True:
         allsprites.add(missile)
         missile.fire(player)
 
-    all_monsters.move()
+    monster_controller.calculate_movement()
+
     allsprites.update()
     
     # Draw all sprites in new positions
     allsprites.draw(screen)
-    all_monsters.paint(screen)
     pygame.display.update()
 
     clock.tick(frames_per_second)
