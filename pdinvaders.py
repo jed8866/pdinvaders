@@ -122,8 +122,7 @@ class Score(pygame.sprite.Sprite):
 
     def addpoints(self, points):
         self.points += points
-        print(self.points)
-    
+
 
 # Class for calculating how the monsters should move.
 class MonsterMovementController:
