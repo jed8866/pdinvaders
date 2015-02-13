@@ -11,3 +11,4 @@ Peter
 * musik til spil
 * musik til introskærm
 * monsterne svinger med armene
+* sjovere baggrund (rum-baggrund)
