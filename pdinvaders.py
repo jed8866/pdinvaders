@@ -100,11 +100,30 @@ class Monster(pygame.sprite.Sprite):
         self.rect = self.rect.move(startpos)
         self.x = x
         self.y = y
+        self.points = 40 - y * 10
 
     def update(self):
         # monster_controller calculates how we should move
         movement = monster_controller.speed
         self.rect = self.rect.move(movement)
+
+#
+class Score(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.points = 0
+        self.font = pygame.font.Font(None, 20)
+        self.color = pygame.Color("white")
+
+    def update(self):
+        msg = "Points: " + str(self.points)
+        self.image = self.font.render(msg, 0, self.color)
+        self.rect = self.image.get_rect()
+
+    def addpoints(self, points):
+        self.points += points
+        print(self.points)
+    
 
 # Class for calculating how the monsters should move.
 class MonsterMovementController:
@@ -206,7 +225,9 @@ clock = pygame.time.Clock()
 background = load_image('background.png')[0]
 allsprites = pygame.sprite.RenderClear()
 player = Player()
+score = Score()
 allsprites.add(player)
+allsprites.add(score)
 monsters = build_monsters(4, 8, allsprites)
 missile = Missile() # Will be added to 'allsprites' when fired.
 monster_controller = MonsterMovementController(monsters)
@@ -242,7 +263,7 @@ while True:
     monster_controller.calculate_movement()
 
     allsprites.update()
-    
+
     # Check for collisions between player-missile and monsters
     if missile.alive():
         for monster in pygame.sprite.spritecollide(missile, monsters, 1):
@@ -251,6 +272,7 @@ while True:
             monster.kill()
             missile.kill()
             monster_controller.update()
+            score.addpoints(monster.points)
 
     # Draw all sprites in new positions
     allsprites.draw(screen)
