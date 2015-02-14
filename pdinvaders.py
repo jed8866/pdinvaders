@@ -18,6 +18,13 @@ def load_image(name):
     image = image.convert()
     return image, image.get_rect()
 
+# Load a bunch of images
+def load_images(*files):
+    images = []
+    for file in files:
+        images.append(load_image(file)[0])
+    return images
+
 # Load a sound.
 def load_sound(name):
     fullname = os.path.join('sounds', name)
@@ -70,13 +77,18 @@ def get_movement(keys_pressed):
 
 # Class for representing the player.
 class Player(pygame.sprite.Sprite):
+    images = []
+    frameduration = 4 # Number of frames per 'animation-image'
 
     # Initialize image, position and speed
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image, self.rect = load_image('player.png')
+        self.image = self.images[0]
+        self.rect = self.image.get_rect()
         self.rect = self.rect.move((screen_size[0] / 2, screen_size[1] - 50))
         self.speed = 5
+        self.blinks = 0
+        self.image_index = 0
 
     # Move player right or left
     def move(self, movement):
@@ -91,6 +103,19 @@ class Player(pygame.sprite.Sprite):
         # ... or to the left
         if self.rect.left < 0:
             self.rect.left = 0
+
+    def hit(self):
+        self.blinks = 20
+
+    def update(self):
+        # When player is hit (by bomb or monster), make it blink
+        # for a while.
+        if self.blinks > 0:
+            self.blinks -= 1
+            self.image_index += 1
+            self.image = self.images[self.image_index//self.frameduration % 2]
+        else:
+            self.image = self.images[0]
 
 # Class for representing a single monster.
 class Monster(pygame.sprite.Sprite):
@@ -135,8 +160,9 @@ class Score(pygame.sprite.Sprite):
         self.points += points
 
 class PlayerLives(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, player):
         pygame.sprite.Sprite.__init__(self)
+        self.player = player
         self.lives = 3
         self.font = pygame.font.Font(None, 20)
         self.color = pygame.Color("white")
@@ -148,6 +174,7 @@ class PlayerLives(pygame.sprite.Sprite):
         self.image = self.font.render(msg, 0, self.color)
 
     def player_died(self):
+        self.player.hit()
         self.lives -= 1
         return self.lives <= 0
 
@@ -264,10 +291,11 @@ screen = pygame.display.set_mode(screen_size)
 
 clock = pygame.time.Clock()
 
+Player.images = load_images('player.png', 'player_black.png')
 background = load_image('background.png')[0]
 allsprites = pygame.sprite.RenderClear()
 player = Player()
-player_lives = PlayerLives()
+player_lives = PlayerLives(player)
 score = Score()
 allsprites.add(player)
 allsprites.add(player_lives)

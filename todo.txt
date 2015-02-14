@@ -1,6 +1,6 @@
 Daniel
-* lyd når spilleren bliver ramt
 * blinke-effekt eller et eller andet når spilleren bliver ramt
+* lyd når spilleren bliver ramt
 * det ser ud til at man kan skyde flere monstre med samme missil - eller
   for hurtigt efter hinanden - fiks det.
 * intro-skærm
