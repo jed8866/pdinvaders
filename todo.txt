@@ -1,10 +1,10 @@
 Daniel
-* monstre skal kunne skyde spilleren
-* spiller-liv + håndter game-over
-* points
+* lyd når spilleren bliver ramt
+* blinke-effekt eller et eller andet når spilleren bliver ramt
+* det ser ud til at man kan skyde flere monstre med samme missil - eller
+  for hurtigt efter hinanden - fiks det.
 * intro-skærm
 * highscore
-
 
 Peter
 * lyd til monster bliver ramt
