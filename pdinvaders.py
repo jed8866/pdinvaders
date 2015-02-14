@@ -107,7 +107,12 @@ class Monster(pygame.sprite.Sprite):
         movement = monster_controller.speed
         self.rect = self.rect.move(movement)
 
-#
+        if len(bombs) < max_bombs:
+            b = Bomb(self)
+            bombs.add(b)
+            allsprites.add(b)
+            b.fire()
+
 class Score(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -122,7 +127,6 @@ class Score(pygame.sprite.Sprite):
 
     def addpoints(self, points):
         self.points += points
-
 
 # Class for calculating how the monsters should move.
 class MonsterMovementController:
@@ -203,10 +207,26 @@ class Missile(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
         
+class Bomb(pygame.sprite.Sprite):
+    def __init__(self, monster):
+        pygame.sprite.Sprite.__init__(self)
+        self.image, self.rect = load_image('bomb.png')
+        self.speed = 5
+        self.monster = monster
+
+    def fire(self):
+        self.rect.center = self.monster.rect.center
+
+    def update(self):
+        self.rect = self.rect.move(0, self.speed)
+        if self.rect.top > screen_size[1]:
+            self.kill()
+
 #--------------------------
 # Various constants
 #--------------------------
 frames_per_second = 60
+max_bombs = 5
 
 #--------------------------
 # Initial setup
@@ -230,6 +250,7 @@ allsprites.add(score)
 monsters = build_monsters(4, 8, allsprites)
 missile = Missile() # Will be added to 'allsprites' when fired.
 monster_controller = MonsterMovementController(monsters)
+bombs = pygame.sprite.RenderClear()
 
 #--------------------------
 # Paint startscreen

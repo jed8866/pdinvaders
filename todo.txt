@@ -1,9 +1,9 @@
 Daniel
+* monstre skal kunne skyde spilleren
 * spiller-liv + håndter game-over
 * points
 * intro-skærm
 * highscore
-* monstre skal kunne skyde spilleren
 
 
 Peter
