@@ -319,10 +319,21 @@ while player.alive():
             monster_controller.update()
             score.addpoints(monster.points)
 
-    # Check for collisions between bombs and player
+    # Check for collisions between player and bombs
     for bomb in pygame.sprite.spritecollide(player, bombs, 1):
         # Player was hit by a bomb
         bomb.kill()
+        game_over = player_lives.player_died()
+        if game_over:
+            player.kill()
+            wait_for_input()
+
+    # Check for collisions between player and monsters
+    for monster in pygame.sprite.spritecollide(player, monsters, 1):
+        # Player was hit by a monster
+        monster.kill()
+        monster_controller.update()
+        score.addpoints(monster.points)
         game_over = player_lives.player_died()
         if game_over:
             player.kill()
