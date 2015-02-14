@@ -47,6 +47,11 @@ def build_monsters(rows, columns, allsprites):
             allsprites.add(monster)
     return monsters
 
+def wait_for_input():
+    while True:
+        if pygame.event.wait().type in (pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
+            break
+
 # Class for holding some named constants - kind of an enum.
 class Movement:
     NONE = 0
@@ -119,14 +124,32 @@ class Score(pygame.sprite.Sprite):
         self.points = 0
         self.font = pygame.font.Font(None, 20)
         self.color = pygame.Color("white")
+        self.update()
+        self.rect = self.image.get_rect().move(0, 0)
 
     def update(self):
         msg = "Points: " + str(self.points)
         self.image = self.font.render(msg, 0, self.color)
-        self.rect = self.image.get_rect()
 
     def addpoints(self, points):
         self.points += points
+
+class PlayerLives(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.lives = 3
+        self.font = pygame.font.Font(None, 20)
+        self.color = pygame.Color("white")
+        self.update()
+        self.rect = self.image.get_rect().move(0, 20)
+
+    def update(self):
+        msg = "Lives: " + str(self.lives)
+        self.image = self.font.render(msg, 0, self.color)
+
+    def player_died(self):
+        self.lives -= 1
+        return self.lives <= 0
 
 # Class for calculating how the monsters should move.
 class MonsterMovementController:
@@ -244,8 +267,10 @@ clock = pygame.time.Clock()
 background = load_image('background.png')[0]
 allsprites = pygame.sprite.RenderClear()
 player = Player()
+player_lives = PlayerLives()
 score = Score()
 allsprites.add(player)
+allsprites.add(player_lives)
 allsprites.add(score)
 monsters = build_monsters(4, 8, allsprites)
 missile = Missile() # Will be added to 'allsprites' when fired.
@@ -260,7 +285,7 @@ screen.blit(background, (0, 0))
 #--------------------------
 # Main loop
 #--------------------------
-while True:
+while player.alive():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
@@ -293,6 +318,15 @@ while True:
             missile.kill()
             monster_controller.update()
             score.addpoints(monster.points)
+
+    # Check for collisions between bombs and player
+    for bomb in pygame.sprite.spritecollide(player, bombs, 1):
+        # Player was hit by a bomb
+        bomb.kill()
+        game_over = player_lives.player_died()
+        if game_over:
+            player.kill()
+            wait_for_input()
 
     # Draw all sprites in new positions
     allsprites.draw(screen)
