@@ -1,8 +1,8 @@
 Daniel
+* intro-skærm
 * lyd når spilleren bliver ramt
 * det ser ud til at man kan skyde flere monstre med samme missil - eller
   for hurtigt efter hinanden - fiks det.
-* intro-skærm
 * highscore
 
 Peter
