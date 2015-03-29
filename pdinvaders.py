@@ -54,6 +54,7 @@ def build_monsters(rows, columns, allsprites):
             allsprites.add(monster)
     return monsters
 
+# Wait for user-input (close app, key-press or mouse-click)
 def wait_for_input():
     while True:
         if pygame.event.wait().type in (pygame.QUIT, pygame.KEYDOWN, pygame.MOUSEBUTTONDOWN):
@@ -74,6 +75,15 @@ def get_movement(keys_pressed):
         movement = Movement.RIGHT
 
     return movement
+
+class StaticTextSprite(pygame.sprite.Sprite):
+    def __init__(self, size, color, msg, pos):
+        pygame.sprite.Sprite.__init__(self)
+
+        font = pygame.font.Font(None, size)
+        color = pygame.Color(color)
+        self.image = font.render(msg, 0, color)
+        self.rect = self.image.get_rect().move(pos)
 
 # Class for representing the player.
 class Player(pygame.sprite.Sprite):
@@ -143,14 +153,15 @@ class Monster(pygame.sprite.Sprite):
             allsprites.add(b)
             b.fire()
 
+# Sprite for player score
 class Score(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.points = 0
-        self.font = pygame.font.Font(None, 20)
-        self.color = pygame.Color("white")
+        self.font = pygame.font.Font(None, 25)
+        self.color = pygame.Color("red")
         self.update()
-        self.rect = self.image.get_rect().move(0, 0)
+        self.rect = self.image.get_rect().move(5, 5)
 
     def update(self):
         msg = "Points: " + str(self.points)
@@ -159,15 +170,16 @@ class Score(pygame.sprite.Sprite):
     def addpoints(self, points):
         self.points += points
 
+# Sprite for number of player lives
 class PlayerLives(pygame.sprite.Sprite):
     def __init__(self, player):
         pygame.sprite.Sprite.__init__(self)
         self.player = player
         self.lives = 3
-        self.font = pygame.font.Font(None, 20)
-        self.color = pygame.Color("white")
+        self.font = pygame.font.Font(None, 25)
+        self.color = pygame.Color("red")
         self.update()
-        self.rect = self.image.get_rect().move(0, 20)
+        self.rect = self.image.get_rect().move(5, 20)
 
     def update(self):
         msg = "Lives: " + str(self.lives)
@@ -236,7 +248,7 @@ class MonsterMovementController:
                 rightmost = m
         return rightmost
 
-# Class for representing player-missile
+# Sprite for player-missile
 class Missile(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -257,6 +269,7 @@ class Missile(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
         
+# Sprite for a bomb (thrown by monsters)
 class Bomb(pygame.sprite.Sprite):
     def __init__(self, monster):
         pygame.sprite.Sprite.__init__(self)
@@ -277,98 +290,158 @@ class Bomb(pygame.sprite.Sprite):
 #--------------------------
 frames_per_second = 60
 max_bombs = 5
-
-#--------------------------
-# Initial setup
-#--------------------------
-pygame.init()
-
-pygame.display.set_caption("PD Invaders")
-pygame.mouse.set_visible(0)
-
 screen_size = [800, 600]
-screen = pygame.display.set_mode(screen_size)
 
-clock = pygame.time.Clock()
+def main():
+    # Initial setup
+    pygame.init()
+    pygame.display.set_caption("PD Invaders")
+    pygame.mouse.set_visible(0)
+    
+    global screen, clock, background, allsprites, player, player_lives, score, monsters, missile, monster_controller, bombs
 
-Player.images = load_images('player.png', 'player_black.png')
-background = load_image('background.png')[0]
-allsprites = pygame.sprite.RenderClear()
-player = Player()
-player_lives = PlayerLives(player)
-score = Score()
-allsprites.add(player)
-allsprites.add(player_lives)
-allsprites.add(score)
-monsters = build_monsters(4, 8, allsprites)
-missile = Missile() # Will be added to 'allsprites' when fired.
-monster_controller = MonsterMovementController(monsters)
-bombs = pygame.sprite.RenderClear()
+    screen = pygame.display.set_mode(screen_size)
+    clock = pygame.time.Clock()
 
-#--------------------------
-# Paint startscreen
-#--------------------------
-screen.blit(background, (0, 0))
+    Player.images = load_images('player.png', 'player_black.png')
+    background = load_image('background.png')[0]
+    allsprites = pygame.sprite.RenderClear()
+    player = Player()
+    player_lives = PlayerLives(player)
+    score = Score()
+    allsprites.add(player)
+    allsprites.add(player_lives)
+    allsprites.add(score)
+    monsters = build_monsters(4, 8, allsprites)
+    missile = Missile() # Will be added to 'allsprites' when fired.
+    monster_controller = MonsterMovementController(monsters)
+    bombs = pygame.sprite.RenderClear()
 
-#--------------------------
-# Main loop
-#--------------------------
-while player.alive():
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_q:
+    show_start_screen()
+    run_game()
+    show_game_over_screen()
+
+def show_start_screen():
+
+    # Print 'Press space to start game'
+    # Wait for user to press space.
+
+    start_screen_sprites = pygame.sprite.RenderClear()
+    title = StaticTextSprite(100, "white", "PD invaders", (200, 200))
+    start_message = StaticTextSprite(30, "red", "Press space to start", (200, 270))
+    start_screen_sprites.add(title)
+    start_screen_sprites.add(start_message)
+
+    screen.blit(background, (0, 0))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    sys.exit()
+                if event.key == pygame.K_SPACE:
+                    return
 
-    # Erase all sprites from previous position
-    allsprites.clear(screen, background)
+        start_screen_sprites.clear(screen, background)
+        start_screen_sprites.update()
+        start_screen_sprites.draw(screen)
+        pygame.display.update()
 
-    # React to player input
-    keys_pressed = pygame.key.get_pressed()
-    player_movement = get_movement(keys_pressed)
-    player.move(player_movement)
+        clock.tick(frames_per_second)
 
-    if keys_pressed[pygame.K_SPACE] and not missile.alive():
-        allsprites.add(missile)
-        missile.fire(player)
+def show_game_over_screen():
+    # Print 'Game over'
+    # Wait for user to any key
 
-    monster_controller.calculate_movement()
+    game_over_screen_sprites = pygame.sprite.RenderClear()
+    text = StaticTextSprite(80, "red", "Game over", (200, 200))
+    game_over_screen_sprites.add(text)
 
-    allsprites.update()
+    screen.blit(background, (0, 0))
 
-    # Check for collisions between player-missile and monsters
-    if missile.alive():
-        for monster in pygame.sprite.spritecollide(missile, monsters, 1):
-            # A monster was hit - kill that and the missile (the missile can
-            # only kill one monster)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                return
+
+        game_over_screen_sprites.clear(screen, background)
+        game_over_screen_sprites.update()
+        game_over_screen_sprites.draw(screen)
+        pygame.display.update()
+
+        clock.tick(frames_per_second)
+
+def run_game():
+    # Paint startscreen
+    screen.blit(background, (0, 0))
+
+    # Main loop
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    sys.exit()
+
+        # Erase all sprites from previous position
+        allsprites.clear(screen, background)
+
+        # React to player input
+        keys_pressed = pygame.key.get_pressed()
+        player_movement = get_movement(keys_pressed)
+        player.move(player_movement)
+
+        if keys_pressed[pygame.K_SPACE] and not missile.alive():
+            allsprites.add(missile)
+            missile.fire(player)
+
+        monster_controller.calculate_movement()
+
+        allsprites.update()
+
+        # Check for collisions between player-missile and monsters
+        if missile.alive():
+            for monster in pygame.sprite.spritecollide(missile, monsters, 1):
+                # A monster was hit - kill that and the missile (the missile can
+                # only kill one monster)
+                monster.kill()
+                missile.kill()
+                monster_controller.update()
+                score.addpoints(monster.points)
+
+        # Check for collisions between player and bombs
+        for bomb in pygame.sprite.spritecollide(player, bombs, 1):
+            # Player was hit by a bomb
+            bomb.kill()
+            game_over = player_lives.player_died()
+            if game_over:
+                player.kill()
+                return
+
+        # Check for collisions between player and monsters
+        for monster in pygame.sprite.spritecollide(player, monsters, 1):
+            # Player was hit by a monster
             monster.kill()
-            missile.kill()
             monster_controller.update()
             score.addpoints(monster.points)
+            game_over = player_lives.player_died()
+            if game_over:
+                player.kill()
+                return
 
-    # Check for collisions between player and bombs
-    for bomb in pygame.sprite.spritecollide(player, bombs, 1):
-        # Player was hit by a bomb
-        bomb.kill()
-        game_over = player_lives.player_died()
-        if game_over:
-            player.kill()
-            wait_for_input()
+        if len(monsters) == 0:
+            return
 
-    # Check for collisions between player and monsters
-    for monster in pygame.sprite.spritecollide(player, monsters, 1):
-        # Player was hit by a monster
-        monster.kill()
-        monster_controller.update()
-        score.addpoints(monster.points)
-        game_over = player_lives.player_died()
-        if game_over:
-            player.kill()
-            wait_for_input()
+        # Draw all sprites in new positions
+        allsprites.draw(screen)
+        pygame.display.update()
 
-    # Draw all sprites in new positions
-    allsprites.draw(screen)
-    pygame.display.update()
+        clock.tick(frames_per_second)
 
-    clock.tick(frames_per_second)
+if __name__ == '__main__':
+    main()
