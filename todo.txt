@@ -8,4 +8,3 @@ Peter
 * lyd til monster bliver ramt
 * musik til spil
 * musik til introskærm
-* monsterne svinger med armene
