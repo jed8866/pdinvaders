@@ -35,7 +35,7 @@ def load_sound(name):
     return sound
 
 # Build a sprite-group holding the monsters.
-def build_monsters(rows, columns, allsprites):
+def build_monsters(allsprites):
     monsters = pygame.sprite.Group()
     horizontal_spacing = 50
     vertical_spacing = 50
@@ -44,15 +44,23 @@ def build_monsters(rows, columns, allsprites):
     start_y = 50
     monster_start = (start_x, start_y)
 
-    for row in range(rows):
-        for col in range(columns):
-            monster_x = monster_start[0] + col * horizontal_spacing
-            monster_y = monster_start[1] + row * vertical_spacing
-    
-            monster = Monster(row+1, (monster_x, monster_y), col, row)
-            monsters.add(monster)
-            allsprites.add(monster)
+    build_monster_row(0, monster_start, horizontal_spacing, vertical_spacing, 1, allsprites, monsters)
+    build_monster_row(1, monster_start, horizontal_spacing, vertical_spacing, 2, allsprites, monsters)
+    build_monster_row(2, monster_start, horizontal_spacing, vertical_spacing, 2, allsprites, monsters)
+    build_monster_row(3, monster_start, horizontal_spacing, vertical_spacing, 3, allsprites, monsters)
+    build_monster_row(4, monster_start, horizontal_spacing, vertical_spacing, 3, allsprites, monsters)
+
     return monsters
+
+def build_monster_row(row, monster_start, horizontal_spacing, vertical_spacing, monster_variant, allsprites, monsters):
+    for col in range(8):
+        monster_x = monster_start[0] + col * horizontal_spacing
+        monster_y = monster_start[1] + row * vertical_spacing
+    
+        monster = Monster(monster_variant, (monster_x, monster_y), col, row)
+        monsters.add(monster)
+        allsprites.add(monster)
+
 
 # Wait for user-input (close app, key-press or mouse-click)
 def wait_for_input():
@@ -130,17 +138,23 @@ class Player(pygame.sprite.Sprite):
 # Class for representing a single monster.
 class Monster(pygame.sprite.Sprite):
 
+    frameduration = 10 # Number of frames per 'animation-image'
+
     # Initialize image and position.
     #   startpos: screen-coordinates for initial position of the monster
     #   x, y: logical coordinates in grid of monsters - fx (2,3)
-    def __init__(self, kind, startpos, x, y):
+    def __init__(self, variant, startpos, x, y):
         pygame.sprite.Sprite.__init__(self)
-        filename = 'monster{0}.png'.format(kind)
-        self.image, self.rect = load_image(filename)
+        file1 = 'monster{0}_1.png'.format(variant)
+        file2 = 'monster{0}_2.png'.format(variant)
+        self.images = load_images(file1, file2)
+        self.image = self.images[0]
+        self.rect = self.image.get_rect()
         self.rect = self.rect.move(startpos)
         self.x = x
         self.y = y
         self.points = 40 - y * 10
+        self.image_index = 0
 
     def update(self):
         # monster_controller calculates how we should move
@@ -152,6 +166,9 @@ class Monster(pygame.sprite.Sprite):
             bombs.add(b)
             allsprites.add(b)
             b.fire()
+
+        self.image_index += 1
+        self.image = self.images[self.image_index//self.frameduration % 2]
 
 # Sprite for player score
 class Score(pygame.sprite.Sprite):
@@ -304,6 +321,7 @@ def main():
     clock = pygame.time.Clock()
 
     Player.images = load_images('player.png', 'player_black.png')
+    Monster.images = load_images('monster1_1.png', 'monster1_2.png', 'monster2_1.png', 'monster2_2.png', 'monster3_1.png', 'monster3_2.png')
     background = load_image('background.png')[0]
     allsprites = pygame.sprite.RenderClear()
     player = Player()
@@ -312,7 +330,7 @@ def main():
     allsprites.add(player)
     allsprites.add(player_lives)
     allsprites.add(score)
-    monsters = build_monsters(4, 8, allsprites)
+    monsters = build_monsters(allsprites)
     missile = Missile() # Will be added to 'allsprites' when fired.
     monster_controller = MonsterMovementController(monsters)
     bombs = pygame.sprite.RenderClear()
@@ -356,7 +374,7 @@ def show_game_over_screen():
     # Wait for user to any key
 
     game_over_screen_sprites = pygame.sprite.RenderClear()
-    text = StaticTextSprite(80, "red", "Game over", (200, 200))
+    text = StaticTextSprite(80, "red", "Game over", (240, 270))
     game_over_screen_sprites.add(text)
 
     screen.blit(background, (0, 0))
