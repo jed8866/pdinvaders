@@ -227,7 +227,7 @@ class MonsterMovementController:
                             or self.leftmost_monster.rect.left < 0)
 
         if switch_direction:
-            self.speed = (-self.speed[0], 2)
+            self.speed = (-self.speed[0], 10)
         else:
             self.speed = (self.speed[0], 0)
 
