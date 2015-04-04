@@ -5,6 +5,8 @@ Daniel
 * highscore
 
 Peter
+* skriv points på 'game over'-skærmen
+* monstrene skal bevæge sig hurtigere når der bliver færre af dem.
 * lyd til monster bliver ramt
 * musik til spil
 * musik til introskærm
